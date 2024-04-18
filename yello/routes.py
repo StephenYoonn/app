@@ -54,12 +54,15 @@ def encode():
 
     existing_mapping = Mappings.query.filter_by(original_url=url).first()
     if existing_mapping:
-        print(existing_mapping.original_url)
-        print(existing_mapping.short_Url)
+        #print(existing_mapping.original_url)
+        #print(existing_mapping.short_Url)
         # URL already exists, return the existing short URL
         return jsonify({"oldLink": url, "encodedLink": existing_mapping.short_Url})
     
-    short = shorten(Mappings.query.count() + 1)
+    next_id = Mappings.query.count() + 1
+    short = shorten(next_id)
+    if len(short) > 6:
+        short = short[:6]
     short_url = f"https://short.est/{short}"
     url_entry = Mappings(original_url=url, short_Url=short_url)
 
@@ -73,18 +76,15 @@ def encode():
     return jsonify({"oldLink": url, "encodedLink": short_url})
 
 def shorten(num, b=62):
-    if b <= 0 or b > 62:
-        return "defaultShort"  # Default short URL if something goes wrong
-    base = string.digits + string.ascii_letters
-    r = num % b
-    res = base[r]
-    q = num // b
-    while q:
-        r = q % b
-        q = q // b
-        res = base[r] + res
-    return res
-
+    characters = string.digits + string.ascii_letters
+    base = len(characters)
+    if num == 0:
+        return characters[0]
+    result = []
+    while num > 0:
+        num, remainder = divmod(num, base)
+        result.append(characters[remainder])
+    return ''.join(reversed(result))
 
 
 def shortUrl(url):
